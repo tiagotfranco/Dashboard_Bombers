@@ -12,8 +12,9 @@ from urllib.request import urlopen
 import json
 import plotly.express as px
 
+#cridar la nostra base de dades des de la web
 client = Socrata("analisi.transparenciacatalunya.cat", None)
-results = client.get('g2ay-3vnj',limit=20000)
+results = client.get('g2ay-3vnj',limit=10000)
 #results = pd.read_csv("Actuacions_dels_Bombers_de_la_Generalitat.csv")
 st.title('Actuacions dels bombers')
 
@@ -58,17 +59,8 @@ pie=results["tga_nom_grupo"].value_counts().plot(kind = 'pie')
 pie.figure
 
 
-
-
-
-
-
-
-
-
+#grafica de esdeveniments al llarg del temps
 results_df=results
-
-#mapa
 dates=results["act_dat_actuacio"]
 alarms_per_date = dates.value_counts().sort_index()
 df5=pd.DataFrame({'Data': alarms_per_date.index, 'Alarms':alarms_per_date})
@@ -76,7 +68,10 @@ fig = px.line(df5, x='Data', y="Alarms")
 st.plotly_chart(fig)
 
 
-#grafica
+
+#mapes per comarques
+
+#mapa 1 (tots els esdeveniments)
 with urlopen('https://raw.githubusercontent.com/sirisacademic/catalonia-cartography/master/shapefiles_catalunya_comarcas.geojson') as response:
 	geojson = json.load(response)
 
@@ -97,13 +92,12 @@ fig = px.choropleth_mapbox(df, geojson=geojson,featureidkey="properties.nom_coma
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 st.plotly_chart(fig)
 
-#mapa 2
+#mapa 2 (esdeveniment especific)
 st.write('En aquest mapa es mostren els accidents corresponents a ','**',nom_grupo,'**.')
 cas = list(results_df["tga_nom_grupo"])
 pc = list(results_df["nom_comarca"])
 df=pd.DataFrame({'tga_nom_grupo': cas, 'nom_comarca':pc})
 #df.groupby(["tga_nom_grupo", "nom_comarca"]).size()
-
 df = df.groupby(["tga_nom_grupo", "nom_comarca"]).size().reset_index(name="Time")
 df1 = df[df.tga_nom_grupo.str.contains(nom_grupo)]
 fig = px.choropleth_mapbox(df1, geojson=geojson,featureidkey="properties.nom_comar", locations='nom_comarca',color='Time',
