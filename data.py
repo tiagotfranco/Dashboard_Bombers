@@ -51,6 +51,7 @@ results = results.loc[between_two_dates]
 #aqui estan contades les diferents coses
 #st.subheader('Recompte tipus de incidencies')
 res=pd.DataFrame.from_records(results,columns=['tga_nom_grupo']).value_counts()
+res
 #res
 
 #pie chart
