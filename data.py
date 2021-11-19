@@ -14,14 +14,14 @@ import plotly.express as px
 
 #cridar la nostra base de dades des de la web
 client = Socrata("analisi.transparenciacatalunya.cat", None)
-results = client.get('g2ay-3vnj',limit=10000)
+results = client.get('g2ay-3vnj',limit=300)
 #results = pd.read_csv("Actuacions_dels_Bombers_de_la_Generalitat.csv")
 st.title('Actuacions dels bombers')
 
 #creació d'un enllaç a l'origen de les dades
-url='https://analisi.transparenciacatalunya.cat/Seguretat/Actuacions-dels-Bombers-de-la-Generalitat/g2ay-3vnj'
-if st.button('Enllaç del repositori'):
-    webbrowser.open_new_tab(url)
+#url='https://analisi.transparenciacatalunya.cat/Seguretat/Actuacions-dels-Bombers-de-la-Generalitat/g2ay-3vnj'
+#if st.button('Enllaç del repositori'):
+#    webbrowser.open_new_tab(url)
 #sidebar
 idate= st.sidebar.date_input('data inicial', dtime.date(2015,1,1))
 fdate= st.sidebar.date_input('data final', dtime.date.today())
@@ -50,18 +50,41 @@ results = results.loc[between_two_dates]
 
 #aqui estan contades les diferents coses
 #st.subheader('Recompte tipus de incidencies')
-res=pd.DataFrame.from_records(results,columns=['tga_nom_grupo']).value_counts()
-res
+#res=pd.DataFrame.from_records(results,columns=['tga_nom_grupo']).value_counts()
 #res
+
 
 #pie chart
 st.subheader('Grafic')
-pie=results["tga_nom_grupo"].value_counts().plot(kind = 'pie')
-pie.figure
+#pie=results["tga_nom_grupo"].value_counts().plot(kind = 'pie')
+#pie.figure
+
+results_df=results
+
+pc = list(results_df["tga_nom_grupo"])
+occurrences = [pc.count(x) for x in pc]
+res=pd.DataFrame({'Grup de Bombers': pc, 'Alertes':occurrences})
+res=res.drop_duplicates(subset ="Grup de Bombers")
+#print(res)
+fig = px.pie(res, values='Alertes', names='Grup de Bombers')
+st.plotly_chart(fig)
+
+#sankey
+from sankey_diagram import draw_sankey
+container = st.container()
+all = st.checkbox("Select all")
+if all:
+    selected_options = container.multiselect("Select one or more options:",
+         ['Centre', 'Girona', 'Lleida', 'Metropolitana Nord', 'Metropolitana Sud', 'Subdirecció General Operativa', 'Tarragona', "Terres de l'Ebre", "U.F. Val d'Aran" ],['Centre', 'Girona', 'Lleida', 'Metropolitana Nord', 'Metropolitana Sud', 'Subdirecció General Operativa', 'Tarragona', "Terres de l'Ebre", "U.F. Val d'Aran" ])
+else:
+    selected_options =  container.multiselect("Select one or more options:",
+        ['Centre', 'Girona', 'Lleida', 'Metropolitana Nord', 'Metropolitana Sud', 'Subdirecció General Operativa', 'Tarragona', "Terres de l'Ebre", "U.F. Val d'Aran" ])
+
+draw_sankey(results, selected_options)
+
 
 
 #grafica de esdeveniments al llarg del temps
-results_df=results
 dates=results["act_dat_actuacio"]
 alarms_per_date = dates.value_counts().sort_index()
 df5=pd.DataFrame({'Data': alarms_per_date.index, 'Alarms':alarms_per_date})
@@ -110,6 +133,28 @@ fig = px.choropleth_mapbox(df1, geojson=geojson,featureidkey="properties.nom_com
                        	labels={'Time':nom_grupo}
                       	)
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+st.plotly_chart(fig)
+
+
+
+
+cas = list(results_df["tga_nom_grupo"])
+pc = list(results_df["nom_comarca"])
+dates=list(results_df["act_dat_actuacio"])
+df=pd.DataFrame({'tga_nom_grupo': cas, 'nom_comarca':pc, 'act_dat_actuacio':dates})
+
+df = df.groupby(["tga_nom_grupo", "nom_comarca",'act_dat_actuacio']).size().reset_index(name="Time")
+df1 = df[df.tga_nom_grupo.str.contains("incendi urbà")]
+
+df1
+#print(df1)
+
+
+alarms_per_date = df1.value_counts().sort_index()
+alarms_per_date
+
+df5=pd.DataFrame({'Date': alarms_per_date.index, 'Alarms':alarms_per_date})
+fig = px.line(df5, x='Date', y="Alarms")
 st.plotly_chart(fig)
 
 

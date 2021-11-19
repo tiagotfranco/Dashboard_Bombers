@@ -9,8 +9,9 @@ Created on Tue Nov 16 16:02:07 2021
 
 import pandas as pd
 import numpy as np
-from sodapy import Socrata 
+from sodapy import Socrata
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
+import streamlit as st
 init_notebook_mode(connected=True)
 
 "variables"
@@ -30,7 +31,7 @@ all_info_df = pd.DataFrame.from_records(all_info)
 
 def draw_sankey(all_info_df, options):
     all_info_df = all_info_df[all_info_df.nom_regio.isin(options)]
-        
+
 
     #Get nodes dataframe with Label and Color columns
     #     Label
@@ -44,7 +45,7 @@ def draw_sankey(all_info_df, options):
     #     Color
     ncolors = []
     for i in range(len(nodes_df)):
-        ncolors += ['rgba('+str(np.random.randint(256))+','+str(np.random.randint(256))+','+str(np.random.randint(256))+',0.99)']    
+        ncolors += ['rgba('+str(np.random.randint(256))+','+str(np.random.randint(256))+','+str(np.random.randint(256))+',0.99)']
     nodes_df.insert(1, 'Color', ncolors)
 
 
@@ -55,30 +56,30 @@ def draw_sankey(all_info_df, options):
     links2_df = links2_df.rename(columns={'tga_nom_grupo':'Source','tal_nom_alarma':'Target'})
     links_df = pd.concat([links1_df,links2_df], ignore_index=True)
 
-    #cicle to count repetitions 
+    #cicle to count repetitions
     lvalues = []
-    for i in range(len(links_df)): 
+    for i in range(len(links_df)):
         samelink = links_df.apply(lambda x : True
                 if (x['Source'] == links_df.at[i,'Source'] and x['Target'] == links_df.at[i,'Target']) else False, axis = 1)
         lvalue = len(samelink[samelink == True].index)
         lvalues += [lvalue]
-    
+
     links_df.insert(2,'Value', lvalues)
-    
+
     #remove duplicates
     links_df = links_df.drop_duplicates(ignore_index=True)
-    
+
     #cilce to add cto link the same colr as source and to replace source and target with the respective indexes
     lcolors = []
-    for i in range(len(links_df)): 
+    for i in range(len(links_df)):
         source_index = nodes_df.index[nodes_df['Label']==links_df.at[i,'Source']].tolist()[0]
         target_index = nodes_df.index[nodes_df['Label']==links_df.at[i,'Target']].tolist()[0]
         lcolors += [nodes_df.at[source_index, 'Color'].replace('0.99','0.4')]
         links_df.at[i,'Source'] = source_index
         links_df.at[i,'Target'] = target_index
-        
+
     links_df.insert(3,'Color', lcolors)
-    
+
 
 
     # Sankey plot setup
@@ -115,7 +116,7 @@ def draw_sankey(all_info_df, options):
           size = 10),)
 
     fig = dict(data=[data_trace], layout=layout)
-    return iplot(fig, validate=False)
+    return st.plotly_chart(fig)
 
 def draw_sank(all_info_df):
 
@@ -131,7 +132,7 @@ def draw_sank(all_info_df):
     #     Color
     ncolors = []
     for i in range(len(nodes_df)):
-        ncolors += ['rgba('+str(np.random.randint(256))+','+str(np.random.randint(256))+','+str(np.random.randint(256))+',0.99)']    
+        ncolors += ['rgba('+str(np.random.randint(256))+','+str(np.random.randint(256))+','+str(np.random.randint(256))+',0.99)']
     nodes_df.insert(1, 'Color', ncolors)
 
 
@@ -142,28 +143,28 @@ def draw_sank(all_info_df):
     links2_df = links2_df.rename(columns={'tga_nom_grupo':'Source','tal_nom_alarma':'Target'})
     links_df = pd.concat([links1_df,links2_df], ignore_index=True)
 
-    #cicle to count repetitions 
+    #cicle to count repetitions
     lvalues = []
-    for i in range(len(links_df)): 
+    for i in range(len(links_df)):
         samelink = links_df.apply(lambda x : True
                 if (x['Source'] == links_df.at[i,'Source'] and x['Target'] == links_df.at[i,'Target']) else False, axis = 1)
         lvalue = len(samelink[samelink == True].index)
         lvalues += [lvalue]
-    
+
     links_df.insert(2,'Value', lvalues)
-    
+
     #remove duplicates
     links_df = links_df.drop_duplicates(ignore_index=True)
-    
+
     #cilce to add cto link the same colr as source and to replace source and target with the respective indexes
     lcolors = []
-    for i in range(len(links_df)): 
+    for i in range(len(links_df)):
         source_index = nodes_df.index[nodes_df['Label']==links_df.at[i,'Source']].tolist()[0]
         target_index = nodes_df.index[nodes_df['Label']==links_df.at[i,'Target']].tolist()[0]
         lcolors += [nodes_df.at[source_index, 'Color'].replace('0.99','0.4')]
         links_df.at[i,'Source'] = source_index
         links_df.at[i,'Target'] = target_index
-        
+
     links_df.insert(3,'Color', lcolors)
 
 
