@@ -84,7 +84,14 @@ st.plotly_chart(fig)
 
 #sankey
 st.subheader('Sankey diagram')
-from sankey_diagram import draw_sankey
+switch=False
+if st.button('Switch Action with Departments'):
+    if switch == False:
+        switch=True
+    elif switch == True:
+        switch=False
+st.write(switch)
+from sankey_diagram import draw_sanke
 container = st.container()
 all = st.checkbox("Select all")
 if all:
@@ -93,8 +100,8 @@ if all:
 else:
     selected_options =  container.multiselect("Select one or more options:",
         ['Centre', 'Girona', 'Lleida', 'Metropolitana Nord', 'Metropolitana Sud', 'Subdirecció General Operativa', 'Tarragona', "Terres de l'Ebre", "U.F. Val d'Aran" ])
-draw_sankey(results, selected_options)
-
+fig2=draw_sanke(results,selected_options,switch)
+st.plotly_chart(fig2)
 ##Distribució de tots els casos
 st.subheader('Representation of all the data by location')
 

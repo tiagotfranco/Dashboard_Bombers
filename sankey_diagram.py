@@ -28,8 +28,8 @@ all_info = client.get("g2ay-3vnj", limit=scraping_depth)
 # Convert to pandas DataFrame
 all_info_df = pd.DataFrame.from_records(all_info)
 
-
-def draw_sankey(all_info_df, options):
+@st.cache(allow_output_mutation=True)
+def draw_sanke(all_info_df, options, switch):
     all_info_df = all_info_df[all_info_df.nom_regio.isin(options)]
 
 
@@ -50,11 +50,20 @@ def draw_sankey(all_info_df, options):
 
 
     #Get links dataframe with Source, Target, Value and Color columns
-    links1_df = all_info_df.filter(items=['nom_regio','tga_nom_grupo'])
-    links2_df = all_info_df.filter(items=['tga_nom_grupo','tal_nom_alarma'])
-    links1_df = links1_df.rename(columns={'nom_regio':'Source', 'tga_nom_grupo':'Target'})
-    links2_df = links2_df.rename(columns={'tga_nom_grupo':'Source','tal_nom_alarma':'Target'})
-    links_df = pd.concat([links1_df,links2_df], ignore_index=True)
+    if switch==False:
+        links1_df = all_info_df.filter(items=['nom_regio','tga_nom_grupo'])
+        links2_df = all_info_df.filter(items=['tga_nom_grupo','tal_nom_alarma'])
+        links1_df = links1_df.rename(columns={'nom_regio':'Source', 'tga_nom_grupo':'Target'})
+        links2_df = links2_df.rename(columns={'tga_nom_grupo':'Source','tal_nom_alarma':'Target'})
+        links_df = pd.concat([links1_df,links2_df], ignore_index=True)
+    else:
+        links1_df = all_info_df.filter(items=['nom_regio','tal_nom_alarma'])
+        links2_df = all_info_df.filter(items=['tga_nom_grupo','tal_nom_alarma'])
+        links1_df = links1_df.rename(columns={'nom_regio':'Source', 'tal_nom_alarma':'Target'})
+        links2_df = links2_df.rename(columns={'tga_nom_grupo':'Target','tal_nom_alarma':'Source'})
+        columns_titles = ["Source","Target"]
+        links2_df=links2_df.reindex(columns=columns_titles)
+        links_df = pd.concat([links1_df,links2_df], ignore_index=True)
 
     #cicle to count repetitions
     lvalues = []
@@ -116,8 +125,9 @@ def draw_sankey(all_info_df, options):
           size = 10),)
 
     fig = dict(data=[data_trace], layout=layout)
-    return st.plotly_chart(fig)
+    return fig
 
+@st.cache(allow_output_mutation=True)
 def draw_sank(all_info_df):
 
     #Get nodes dataframe with Label and Color columns
